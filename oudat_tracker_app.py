@@ -1,3 +1,4 @@
+
 # 📲 إرسال تنبيه عبر Telegram عند وجود عهد متأخرة
 import requests
 
@@ -13,6 +14,7 @@ def send_telegram_alert(message):
         response = requests.post(url, data=payload)
         if response.status_code == 200:
             st.toast("📤 تم إرسال تنبيه عبر Telegram")
+            st.warning("لم يتم إرسال التنبيه، تحقق من الإعدادات.")
     except Exception as e:
         st.error(f"خطأ في إرسال التنبيه: {e}")
 
@@ -32,8 +34,7 @@ EXCEL_PATH = "دفتر_العهد_المنظم.xlsx"
 def load_data():
     if os.path.exists(EXCEL_PATH):
         return pd.read_excel(EXCEL_PATH)
-    else:
-        return pd.DataFrame(columns=[
+        return pd.DataFrame(columns=["مرفق",
             "رقم اليومية", "التاريخ", "اسم المستفيد", "نوع العهدة",
             "البيان", "المبلغ", "نوع الحركة (مدين/دائن)", "تاريخ العودة", "تمت التسوية؟"
         ])
@@ -99,33 +100,40 @@ with st.form("form_entry"):
     submitted = st.form_submit_button("💾 تسجيل العهدة")
 
     
-if submitted:
-    # حفظ المرفق إن وُجد
-    attachment_path = ""
-    if uploaded_file is not None:
-        filename = f"{daily_number}_{uploaded_file.name}"
-        attachment_path = os.path.join(attachments_folder, filename)
-        with open(attachment_path, "wb") as f:
-            f.write(uploaded_file.getbuffer())
 
-    new_row = {
-        "مرفق": attachment_path,
-        "رقم اليومية": daily_number,
-        "التاريخ": entry_date,
-        "اسم المستفيد": name,
-        "نوع العهدة": ouda_type,
-        "البيان": note,
-        "المبلغ": amount,
-        "نوع الحركة (مدين/دائن)": movement_type,
-        "تاريخ العودة": return_date,
-        "تمت التسوية؟": settled
-    }
-    df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
-    df.to_excel(EXCEL_PATH, index=False)
-    st.success("✅ تم تسجيل العهدة بنجاح")
-    st.rerun()  # يعيد تحميل النموذج ويفرّغه بعد التسجيل
+    if submitted:
+        # حفظ المرفق إن وُجد
+        attachment_path = ""
+        if uploaded_file is not None:
+            filename = f"{daily_number}_{uploaded_file.name}"
+            attachment_path = os.path.join(attachments_folder, filename)
+            with open(attachment_path, "wb") as f:
+                f.write(uploaded_file.getbuffer())
+
+        new_row = {
+            "مرفق": attachment_path,
+            "رقم اليومية": daily_number,
+            "التاريخ": entry_date,
+            "اسم المستفيد": name,
+            "نوع العهدة": ouda_type,
+            "البيان": note,
+            "المبلغ": amount,
+            "نوع الحركة (مدين/دائن)": movement_type,
+            "تاريخ العودة": return_date,
+            "تمت التسوية؟": settled
+        }
+        df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
+        st.write("✅ البيانات التي سيتم حفظها:", new_row)
+df.to_excel(EXCEL_PATH, index=False)
+st.success("✅ تم حفظ العهدة في ملف Excel")
+        st.success("✅ تم تسجيل العهدة بنجاح")
+        st.rerun()
+
+
+        st.rerun()  # يعيد تحميل النموذج ويفرّغه بعد التسجيل
 
 # 🔔 تنبيهات العهد المتأخرة
+
 st.subheader("⏰ العهد المتأخرة عن التسوية")
 if "تمت التسوية؟" in df.columns and "تاريخ العودة" in df.columns:
     today = pd.to_datetime(datetime.today().date())
@@ -142,7 +150,7 @@ if "تمت التسوية؟" in df.columns and "تاريخ العودة" in df.c
 else:
     st.info("ℹ️ لا يمكن عرض العهد المتأخرة لعدم وجود الأعمدة المطلوبة.")
 
-# 📊 ملخص تحليلي
+
 st.subheader("📊 ملخص العهد حسب النوع")
 summary = df.groupby("نوع العهدة")["المبلغ"].sum().reset_index()
 st.dataframe(summary)
@@ -166,5 +174,4 @@ unsettled = summary_by_name[summary_by_name["المتبقي"] > 0]
 if not unsettled.empty:
     st.warning("🟠 الموظفون الذين لديهم عُهد غير مسددة:")
     st.dataframe(unsettled[["اسم المستفيد", "المتبقي"]])
-else:
     st.success("✅ جميع العُهد تمت تسويتها.")
