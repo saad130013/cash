@@ -94,10 +94,10 @@ if submitted:
         "نوع الحركة (مدين/دائن)": movement_type,
         "تاريخ العودة": return_date,
         "تمت التسوية؟": settled
-            st.write("🚧 البيانات المُرسلة:")
+    }
+        st.write("🚧 البيانات المُرسلة:")
     st.json(new_row)
 
-    }
     df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
     df.to_excel(EXCEL_PATH, index=False)
     st.success("✅ تم تسجيل العهدة بنجاح")
