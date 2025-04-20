@@ -100,14 +100,15 @@ with st.form("form_entry"):
     submitted = st.form_submit_button("💾 تسجيل العهدة")
 
     
-if submitted:
-    # حفظ المرفق إن وُجد
-    attachment_path = ""
-    if uploaded_file is not None:
-        filename = f"{daily_number}_{uploaded_file.name}"
-        attachment_path = os.path.join(attachments_folder, filename)
-        with open(attachment_path, "wb") as f:
-            f.write(uploaded_file.getbuffer())
+
+    if submitted:
+        # حفظ المرفق إن وُجد
+        attachment_path = ""
+        if uploaded_file is not None:
+            filename = f"{daily_number}_{uploaded_file.name}"
+            attachment_path = os.path.join(attachments_folder, filename)
+            with open(attachment_path, "wb") as f:
+                f.write(uploaded_file.getbuffer())
 
         new_row = {
             "مرفق": attachment_path,
@@ -124,6 +125,8 @@ if submitted:
         df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
         df.to_excel(EXCEL_PATH, index=False)
         st.success("✅ تم تسجيل العهدة بنجاح")
+        st.experimental_rerun()
+
 
         st.experimental_rerun()  # يعيد تحميل النموذج ويفرّغه بعد التسجيل
 
