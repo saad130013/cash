@@ -44,7 +44,7 @@ anomaly_model.fit(sample_amounts)
 
 
 # تصنيف البيان عند الإدخال
-if note:
+if "note" in locals() and note:
     predicted_type = text_model.predict([note])[0]
     st.info(f"📌 التصنيف المقترح للبيان: {predicted_type}")
 
