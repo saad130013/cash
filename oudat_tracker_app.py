@@ -76,7 +76,13 @@ with st.form("form_entry"):
     submitted = st.form_submit_button("💾 تسجيل العهدة")
 
 if submitted:
-    ...
+    attachment_path = ""
+    if uploaded_file is not None:
+        filename = f"{daily_number}_{uploaded_file.name}"
+        attachment_path = os.path.join(attachments_folder, filename)
+        with open(attachment_path, "wb") as f:
+            f.write(uploaded_file.getbuffer())
+
     new_row = {
         "مرفق": attachment_path,
         "رقم اليومية": daily_number,
@@ -89,16 +95,9 @@ if submitted:
         "تاريخ العودة": return_date,
         "تمت التسوية؟": settled
     }
-
-    # ✅ هذا هو الكود اللي نضيفه
     st.write("🚧 البيانات المُرسلة:")
     st.json(new_row)
-
-    df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
-    df.to_excel(EXCEL_PATH, index=False)
-    st.success("✅ تم تسجيل العهدة بنجاح")
-    st.rerun()
-
+    }
     df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
     df.to_excel(EXCEL_PATH, index=False)
     st.success("✅ تم تسجيل العهدة بنجاح")
@@ -132,15 +131,10 @@ with st.expander("📄 عرض جميع العهد"):
 
 # 💸 ملخص التسوية حسب المستفيد
 st.subheader("💸 ملخص التسوية حسب المستفيد")
-
-if "نوع الحركة (مدين/دائن)" in df.columns:
-    summary_by_name = df.groupby(["اسم المستفيد", "نوع الحركة (مدين/دائن)"])["المبلغ"].sum().unstack(fill_value=0)
-    summary_by_name["المتبقي"] = summary_by_name.get("مدين", 0) - summary_by_name.get("دائن", 0)
-    summary_by_name = summary_by_name.reset_index()
-    st.dataframe(summary_by_name)
-else:
-    st.info("ℹ️ لا يمكن عرض ملخص التسوية لعدم وجود عمود 'نوع الحركة (مدين/دائن)' في البيانات.")
-
+summary_by_name = df.groupby(["اسم المستفيد", "نوع الحركة (مدين/دائن)"])["المبلغ"].sum().unstack(fill_value=0)
+summary_by_name["المتبقي"] = summary_by_name.get("مدين", 0) - summary_by_name.get("دائن", 0)
+summary_by_name = summary_by_name.reset_index()
+st.dataframe(summary_by_name)
 
 unsettled = summary_by_name[summary_by_name["المتبقي"] > 0]
 if not unsettled.empty:
