@@ -106,10 +106,13 @@ if submitted:
         df.to_excel(EXCEL_PATH, index=False)
         st.success("✅ تم تسجيل العهدة بنجاح")
 
+        st.experimental_rerun()  # يعيد تحميل النموذج ويفرّغه بعد التسجيل
+
 # 🔔 تنبيهات العهد المتأخرة
 st.subheader("⏰ العهد المتأخرة عن التسوية")
 today = pd.to_datetime(datetime.today().date())
-overdue = df[(df["تمت التسوية؟"] == "لا") & (pd.to_datetime(df["تاريخ العودة"]) < today)]
+if "تمت التسوية؟" in df.columns and "تاريخ العودة" in df.columns:
+    overdue = df[(df["تمت التسوية؟"] == "لا") & (pd.to_datetime(df["تاريخ العودة"]) < today)]
 
 if not overdue.empty:
     st.warning(f"⚠️ هناك {len(overdue)} عهدة/عُهد تجاوزت تاريخ العودة ولم تُسدد:")
