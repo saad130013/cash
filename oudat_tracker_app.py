@@ -30,6 +30,23 @@ df = df[(pd.to_datetime(df["التاريخ"]) >= pd.to_datetime(start_date)) & (
 
 
 # ✅ نموذج إدخال جديد
+
+# تحميل النماذج
+import joblib
+text_model = joblib.load("text_classifier_model.joblib")
+anomaly_model = joblib.load("anomaly_detector_model.joblib")
+
+# تصنيف البيان عند الإدخال
+if note:
+    predicted_type = text_model.predict([note])[0]
+    st.info(f"📌 التصنيف المقترح للبيان: {predicted_type}")
+
+# كشف الشذوذ في المبلغ
+if amount > 0:
+    anomaly_flag = anomaly_model.predict([[amount]])[0]
+    if anomaly_flag == -1:
+        st.warning("⚠️ المبلغ المُدخل خارج النطاق المعتاد (قيمة شاذة). يُرجى التأكد.")
+
 # 📤 رفع مرفق (اختياري)
 st.markdown("**📎 يمكن رفع ملف مرفق لكل عهدة (PDF أو صورة):**")
 uploaded_file = st.file_uploader("اختيار المرفق", type=["pdf", "png", "jpg", "jpeg"])
