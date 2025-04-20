@@ -128,10 +128,15 @@ with st.expander("📄 عرض جميع العهد"):
 
 # 💸 ملخص التسوية حسب المستفيد
 st.subheader("💸 ملخص التسوية حسب المستفيد")
-summary_by_name = df.groupby(["اسم المستفيد", "نوع الحركة (مدين/دائن)"])["المبلغ"].sum().unstack(fill_value=0)
-summary_by_name["المتبقي"] = summary_by_name.get("مدين", 0) - summary_by_name.get("دائن", 0)
-summary_by_name = summary_by_name.reset_index()
-st.dataframe(summary_by_name)
+
+if "نوع الحركة (مدين/دائن)" in df.columns:
+    summary_by_name = df.groupby(["اسم المستفيد", "نوع الحركة (مدين/دائن)"])["المبلغ"].sum().unstack(fill_value=0)
+    summary_by_name["المتبقي"] = summary_by_name.get("مدين", 0) - summary_by_name.get("دائن", 0)
+    summary_by_name = summary_by_name.reset_index()
+    st.dataframe(summary_by_name)
+else:
+    st.info("ℹ️ لا يمكن عرض ملخص التسوية لعدم وجود عمود 'نوع الحركة (مدين/دائن)' في البيانات.")
+
 
 unsettled = summary_by_name[summary_by_name["المتبقي"] > 0]
 if not unsettled.empty:
