@@ -34,7 +34,14 @@ df = df[(pd.to_datetime(df["التاريخ"]) >= pd.to_datetime(start_date)) & (
 # تحميل النماذج
 import joblib
 text_model = joblib.load("text_classifier_model.joblib")
-anomaly_model = joblib.load("anomaly_detector_model.joblib")
+
+from sklearn.ensemble import IsolationForest
+# تدريب نموذج كشف الشذوذ مباشرة عند التشغيل
+anomaly_model = IsolationForest(contamination=0.2, random_state=42)
+# بيانات تدريب مبسطة
+sample_amounts = [[100], [150], [200], [180], [160], [250], [220], [190], [175], [130], [4000], [5000]]
+anomaly_model.fit(sample_amounts)
+
 
 # تصنيف البيان عند الإدخال
 if note:
