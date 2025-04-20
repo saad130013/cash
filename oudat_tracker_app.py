@@ -112,8 +112,16 @@ if submitted:
 st.subheader("⏰ العهد المتأخرة عن التسوية")
 today = pd.to_datetime(datetime.today().date())
 if "تمت التسوية؟" in df.columns and "تاريخ العودة" in df.columns:
+if "تمت التسوية؟" in df.columns and "تاريخ العودة" in df.columns:
+    today = pd.to_datetime(datetime.today().date())
     overdue = df[(df["تمت التسوية؟"] == "لا") & (pd.to_datetime(df["تاريخ العودة"]) < today)]
-
+    if not overdue.empty:
+        st.warning(f"⚠️ هناك {len(overdue)} عهدة/عُهد تجاوزت تاريخ العودة ولم تُسدد:")
+        st.dataframe(overdue)
+    else:
+        st.success("✅ لا توجد عهد متأخرة حالياً.")
+else:
+    st.info("ℹ️ لا يمكن عرض العهد المتأخرة لعدم وجود الأعمدة المطلوبة في الملف.")
 if not overdue.empty:
     st.warning(f"⚠️ هناك {len(overdue)} عهدة/عُهد تجاوزت تاريخ العودة ولم تُسدد:")
     st.dataframe(overdue)
