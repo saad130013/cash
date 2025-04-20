@@ -1,3 +1,25 @@
+
+# 📲 إرسال تنبيه عبر Telegram عند وجود عهد متأخرة
+import requests
+
+def send_telegram_alert(message):
+    token = "8064722037:AAFjn6v_d8fGj0mBAfezOpndKHV4LBFd1HI"
+    chat_id = "961480270"
+    url = f"https://api.telegram.org/bot{token}/sendMessage"
+    payload = {
+        "chat_id": chat_id,
+        "text": message
+    }
+    try:
+        response = requests.post(url, data=payload)
+        if response.status_code == 200:
+            st.toast("📤 تم إرسال تنبيه عبر Telegram")
+        else:
+            st.warning("لم يتم إرسال التنبيه، تحقق من الإعدادات.")
+    except Exception as e:
+        st.error(f"خطأ في إرسال التنبيه: {e}")
+
+
 import streamlit as st
 import pandas as pd
 from datetime import datetime, timedelta
@@ -89,34 +111,45 @@ if submitted:
         with open(attachment_path, "wb") as f:
             f.write(uploaded_file.getbuffer())
 
-    new_row = {
-        "مرفق": attachment_path,
-        "رقم اليومية": daily_number,
-        "التاريخ": entry_date,
-        "اسم المستفيد": name,
-        "نوع العهدة": ouda_type,
-        "البيان": note,
-        "المبلغ": amount,
-        "نوع الحركة (مدين/دائن)": movement_type,
-        "تاريخ العودة": return_date,
-        "تمت التسوية؟": settled
-    }
-    df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
-    df.to_excel(EXCEL_PATH, index=False)
-    st.success("✅ تم تسجيل العهدة بنجاح")
+        new_row = {
+            "مرفق": attachment_path,
+            "رقم اليومية": daily_number,
+            "التاريخ": entry_date,
+            "اسم المستفيد": name,
+            "نوع العهدة": ouda_type,
+            "البيان": note,
+            "المبلغ": amount,
+            "نوع الحركة (مدين/دائن)": movement_type,
+            "تاريخ العودة": return_date,
+            "تمت التسوية؟": settled
+        }
+        df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
+        df.to_excel(EXCEL_PATH, index=False)
+        st.success("✅ تم تسجيل العهدة بنجاح")
+
+        st.experimental_rerun()  # يعيد تحميل النموذج ويفرّغه بعد التسجيل
 
 # 🔔 تنبيهات العهد المتأخرة
 st.subheader("⏰ العهد المتأخرة عن التسوية")
+today = pd.to_datetime(datetime.today().date())
+if "تمت التسوية؟" in df.columns and "تاريخ العودة" in df.columns:
 if "تمت التسوية؟" in df.columns and "تاريخ العودة" in df.columns:
     today = pd.to_datetime(datetime.today().date())
     overdue = df[(df["تمت التسوية؟"] == "لا") & (pd.to_datetime(df["تاريخ العودة"]) < today)]
     if not overdue.empty:
+        send_telegram_alert("🚨 يوجد {len(overdue)} عهدة متأخرة لم يتم تسويتها!")
         st.warning(f"⚠️ هناك {len(overdue)} عهدة/عُهد تجاوزت تاريخ العودة ولم تُسدد:")
         st.dataframe(overdue)
     else:
         st.success("✅ لا توجد عهد متأخرة حالياً.")
 else:
     st.info("ℹ️ لا يمكن عرض العهد المتأخرة لعدم وجود الأعمدة المطلوبة في الملف.")
+if not overdue.empty:
+        send_telegram_alert("🚨 يوجد {len(overdue)} عهدة متأخرة لم يتم تسويتها!")
+    st.warning(f"⚠️ هناك {len(overdue)} عهدة/عُهد تجاوزت تاريخ العودة ولم تُسدد:")
+    st.dataframe(overdue)
+else:
+    st.success("✅ لا توجد عهد متأخرة حالياً.")
 
 # 📊 ملخص تحليلي
 st.subheader("📊 ملخص العهد حسب النوع")
