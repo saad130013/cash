@@ -94,7 +94,8 @@ if submitted:
     df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
     df.to_excel(EXCEL_PATH, index=False)
     st.success("✅ تم تسجيل العهدة بنجاح")
-    st.rerun()
+    with st.expander("📌 العهدة المسجلة الآن:"):
+        st.dataframe(pd.DataFrame([new_row]))
 
 # تنبيهات العهد المتأخرة
 st.subheader("⏰ العهد المتأخرة عن التسوية")
