@@ -14,7 +14,6 @@ def send_telegram_alert(message):
         response = requests.post(url, data=payload)
         if response.status_code == 200:
             st.toast("📤 تم إرسال تنبيه عبر Telegram")
-        else:
             st.warning("لم يتم إرسال التنبيه، تحقق من الإعدادات.")
     except Exception as e:
         st.error(f"خطأ في إرسال التنبيه: {e}")
@@ -35,7 +34,6 @@ EXCEL_PATH = "دفتر_العهد_المنظم.xlsx"
 def load_data():
     if os.path.exists(EXCEL_PATH):
         return pd.read_excel(EXCEL_PATH)
-    else:
         return pd.DataFrame(columns=[
             "رقم اليومية", "التاريخ", "اسم المستفيد", "نوع العهدة",
             "البيان", "المبلغ", "نوع الحركة (مدين/دائن)", "تاريخ العودة", "تمت التسوية؟"
@@ -199,5 +197,4 @@ unsettled = summary_by_name[summary_by_name["المتبقي"] > 0]
 if not unsettled.empty:
     st.warning("🟠 الموظفون الذين لديهم عُهد غير مسددة:")
     st.dataframe(unsettled[["اسم المستفيد", "المتبقي"]])
-else:
     st.success("✅ جميع العُهد تمت تسويتها.")
