@@ -125,10 +125,10 @@ with st.form("form_entry"):
         df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
         df.to_excel(EXCEL_PATH, index=False)
         st.success("✅ تم تسجيل العهدة بنجاح")
-        st.experimental_rerun()
+        st.rerun()
 
 
-        st.experimental_rerun()  # يعيد تحميل النموذج ويفرّغه بعد التسجيل
+        st.rerun()  # يعيد تحميل النموذج ويفرّغه بعد التسجيل
 
 # 🔔 تنبيهات العهد المتأخرة
 
