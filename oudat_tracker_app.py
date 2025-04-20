@@ -1,4 +1,3 @@
-
 import streamlit as st
 import pandas as pd
 from datetime import datetime, timedelta
@@ -90,28 +89,24 @@ if submitted:
         with open(attachment_path, "wb") as f:
             f.write(uploaded_file.getbuffer())
 
-        new_row = {
-            "مرفق": attachment_path,
-            "رقم اليومية": daily_number,
-            "التاريخ": entry_date,
-            "اسم المستفيد": name,
-            "نوع العهدة": ouda_type,
-            "البيان": note,
-            "المبلغ": amount,
-            "نوع الحركة (مدين/دائن)": movement_type,
-            "تاريخ العودة": return_date,
-            "تمت التسوية؟": settled
-        }
-        df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
-        df.to_excel(EXCEL_PATH, index=False)
-        st.success("✅ تم تسجيل العهدة بنجاح")
-
-        st.experimental_rerun()  # يعيد تحميل النموذج ويفرّغه بعد التسجيل
+    new_row = {
+        "مرفق": attachment_path,
+        "رقم اليومية": daily_number,
+        "التاريخ": entry_date,
+        "اسم المستفيد": name,
+        "نوع العهدة": ouda_type,
+        "البيان": note,
+        "المبلغ": amount,
+        "نوع الحركة (مدين/دائن)": movement_type,
+        "تاريخ العودة": return_date,
+        "تمت التسوية؟": settled
+    }
+    df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
+    df.to_excel(EXCEL_PATH, index=False)
+    st.success("✅ تم تسجيل العهدة بنجاح")
 
 # 🔔 تنبيهات العهد المتأخرة
 st.subheader("⏰ العهد المتأخرة عن التسوية")
-today = pd.to_datetime(datetime.today().date())
-if "تمت التسوية؟" in df.columns and "تاريخ العودة" in df.columns:
 if "تمت التسوية؟" in df.columns and "تاريخ العودة" in df.columns:
     today = pd.to_datetime(datetime.today().date())
     overdue = df[(df["تمت التسوية؟"] == "لا") & (pd.to_datetime(df["تاريخ العودة"]) < today)]
@@ -122,11 +117,6 @@ if "تمت التسوية؟" in df.columns and "تاريخ العودة" in df.c
         st.success("✅ لا توجد عهد متأخرة حالياً.")
 else:
     st.info("ℹ️ لا يمكن عرض العهد المتأخرة لعدم وجود الأعمدة المطلوبة في الملف.")
-if not overdue.empty:
-    st.warning(f"⚠️ هناك {len(overdue)} عهدة/عُهد تجاوزت تاريخ العودة ولم تُسدد:")
-    st.dataframe(overdue)
-else:
-    st.success("✅ لا توجد عهد متأخرة حالياً.")
 
 # 📊 ملخص تحليلي
 st.subheader("📊 ملخص العهد حسب النوع")
