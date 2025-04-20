@@ -123,7 +123,9 @@ with st.form("form_entry"):
             "تمت التسوية؟": settled
         }
         df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
-        df.to_excel(EXCEL_PATH, index=False)
+        st.write("✅ البيانات التي سيتم حفظها:", new_row)
+df.to_excel(EXCEL_PATH, index=False)
+st.success("✅ تم حفظ العهدة في ملف Excel")
         st.success("✅ تم تسجيل العهدة بنجاح")
         st.rerun()
 
