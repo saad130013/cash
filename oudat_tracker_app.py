@@ -88,8 +88,8 @@ if submitted:
         "تمت التسوية؟": settled
     }
 
-    st.write("🚧 البيانات المُرسلة:")
-    st.json(new_row)
+    with st.expander("📌 العهدة المسجلة الآن:"):
+        st.dataframe(pd.DataFrame([new_row]))
 
     df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
     df.to_excel(EXCEL_PATH, index=False)
