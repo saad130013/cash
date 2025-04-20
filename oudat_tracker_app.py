@@ -1,4 +1,3 @@
-
 # 📲 إرسال تنبيه عبر Telegram عند وجود عهد متأخرة
 import requests
 
@@ -14,7 +13,6 @@ def send_telegram_alert(message):
         response = requests.post(url, data=payload)
         if response.status_code == 200:
             st.toast("📤 تم إرسال تنبيه عبر Telegram")
-            st.warning("لم يتم إرسال التنبيه، تحقق من الإعدادات.")
     except Exception as e:
         st.error(f"خطأ في إرسال التنبيه: {e}")
 
@@ -34,9 +32,11 @@ EXCEL_PATH = "دفتر_العهد_المنظم.xlsx"
 def load_data():
     if os.path.exists(EXCEL_PATH):
         return pd.read_excel(EXCEL_PATH)
-        return pd.DataFrame(columns=["مرفق",
-            "رقم اليومية", "التاريخ", "اسم المستفيد", "نوع العهدة",
-            "البيان", "المبلغ", "نوع الحركة (مدين/دائن)", "تاريخ العودة", "تمت التسوية؟"
+    else:
+        return pd.DataFrame(columns=[
+            "مرفق", "رقم اليومية", "التاريخ", "اسم المستفيد", 
+            "نوع العهدة", "البيان", "المبلغ", 
+            "نوع الحركة (مدين/دائن)", "تاريخ العودة", "تمت التسوية؟"
         ])
 
 df = load_data()
@@ -45,11 +45,10 @@ df = load_data()
 st.sidebar.header("🗂️ تصفية العهد حسب التاريخ")
 start_date = st.sidebar.date_input("من تاريخ", value=datetime.today().replace(day=1))
 end_date = st.sidebar.date_input("إلى تاريخ", value=datetime.today())
-df = df[(pd.to_datetime(df["التاريخ"]) >= pd.to_datetime(start_date)) & (pd.to_datetime(df["التاريخ"]) <= pd.to_datetime(end_date))]
-
+df = df[(pd.to_datetime(df["التاريخ"]) >= pd.to_datetime(start_date)) & 
+        (pd.to_datetime(df["التاريخ"]) <= pd.to_datetime(end_date))]
 
 # ✅ نموذج إدخال جديد
-
 # تحميل النماذج
 import joblib
 text_model = joblib.load("text_classifier_model.joblib")
@@ -57,32 +56,30 @@ text_model = joblib.load("text_classifier_model.joblib")
 from sklearn.ensemble import IsolationForest
 # تدريب نموذج كشف الشذوذ مباشرة عند التشغيل
 anomaly_model = IsolationForest(contamination=0.2, random_state=42)
-# بيانات تدريب مبسطة
 sample_amounts = [[100], [150], [200], [180], [160], [250], [220], [190], [175], [130], [4000], [5000]]
 anomaly_model.fit(sample_amounts)
 
-
-# تصنيف البيان عند الإدخال
+# التصنيف وكشف الشذوذ
 if "note" in locals() and note:
     predicted_type = text_model.predict([note])[0]
-    st.info(f"📌 التصنيف المقترح للبيان: {predicted_type}")
+    st.info(f"📌 التصنيف المقترح: {predicted_type}")
 
-# كشف الشذوذ في المبلغ
 if "amount" in locals() and amount > 0:
     anomaly_flag = anomaly_model.predict([[amount]])[0]
     if anomaly_flag == -1:
-        st.warning("⚠️ المبلغ المُدخل خارج النطاق المعتاد (قيمة شاذة). يُرجى التأكد.")
+        st.warning("⚠️ المبلغ خارج النطاق الطبيعي!")
 
-# 📤 رفع مرفق (اختياري)
-st.markdown("**📎 يمكن رفع ملف مرفق لكل عهدة (PDF أو صورة):**")
-uploaded_file = st.file_uploader("اختيار المرفق", type=["pdf", "png", "jpg", "jpeg"])
+# 📤 رفع المرفقات
+st.markdown("**📎 رفع مرفق (اختياري):**")
+uploaded_file = st.file_uploader("اختيار الملف", type=["pdf", "png", "jpg", "jpeg"])
 
 attachments_folder = "attachments"
 if not os.path.exists(attachments_folder):
     os.makedirs(attachments_folder)
 
-st.subheader("📥 تسجيل عهدة جديدة")
-with st.form("form_entry"):
+# 📥 نموذج التسجيل
+st.subheader("تسجيل عهدة جديدة")
+with st.form("entry_form"):
     col1, col2 = st.columns(2)
     with col1:
         daily_number = st.text_input("رقم اليومية")
@@ -93,23 +90,21 @@ with st.form("form_entry"):
     with col2:
         movement_type = st.selectbox("نوع الحركة", ["مدين", "دائن"])
         note = st.text_area("البيان")
-        today = datetime.today().date()
-        entry_date = st.date_input("تاريخ التسجيل", value=today)
-        return_date = st.date_input("تاريخ العودة", value=today + timedelta(days=30))
-
-    submitted = st.form_submit_button("💾 تسجيل العهدة")
-
+        entry_date = st.date_input("تاريخ التسجيل", datetime.today().date())
+        return_date = st.date_input("تاريخ العودة", datetime.today().date() + timedelta(days=30))
     
+    submitted = st.form_submit_button("💾 حفظ")
 
     if submitted:
-        # حفظ المرفق إن وُجد
+        # حفظ المرفق
         attachment_path = ""
-        if uploaded_file is not None:
+        if uploaded_file:
             filename = f"{daily_number}_{uploaded_file.name}"
             attachment_path = os.path.join(attachments_folder, filename)
             with open(attachment_path, "wb") as f:
                 f.write(uploaded_file.getbuffer())
-
+        
+        # إضافة الصف الجديد
         new_row = {
             "مرفق": attachment_path,
             "رقم اليومية": daily_number,
@@ -123,55 +118,38 @@ with st.form("form_entry"):
             "تمت التسوية؟": settled
         }
         df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
-        st.write("✅ البيانات التي سيتم حفظها:", new_row)
-df.to_excel(EXCEL_PATH, index=False)
-st.success("✅ تم حفظ العهدة في ملف Excel")
-        st.success("✅ تم تسجيل العهدة بنجاح")
+        df.to_excel(EXCEL_PATH, index=False)
+        st.success("✅ تم الحفظ بنجاح")
         st.rerun()
 
-
-        st.rerun()  # يعيد تحميل النموذج ويفرّغه بعد التسجيل
-
-# 🔔 تنبيهات العهد المتأخرة
-
-st.subheader("⏰ العهد المتأخرة عن التسوية")
+# 🔔 التنبيهات
+st.subheader("⏰ العهد المتأخرة")
 if "تمت التسوية؟" in df.columns and "تاريخ العودة" in df.columns:
     today = pd.to_datetime(datetime.today().date())
-    overdue = df[
-        (df["تمت التسوية؟"] == "لا") & 
-        (pd.to_datetime(df["تاريخ العودة"]) < today)
-    ]
+    overdue = df[(df["تمت التسوية؟"] == "لا") & (pd.to_datetime(df["تاريخ العودة"]) < today)]
     if not overdue.empty:
-        st.warning(f"⚠️ هناك {len(overdue)} عهدة/عُهد تجاوزت تاريخ العودة ولم تُسدد:")
+        st.warning(f"⚠️ عدد العهد المتأخرة: {len(overdue)}")
         st.dataframe(overdue)
-        send_telegram_alert(f"🚨 يوجد {len(overdue)} عهدة متأخرة لم يتم تسويتها!")
+        send_telegram_alert(f"تنبيه! {len(overdue)} عهدة متأخرة")
     else:
-        st.success("✅ لا توجد عهد متأخرة حالياً.")
+        st.success("✅ لا توجد عهدة متأخرة")
 else:
-    st.info("ℹ️ لا يمكن عرض العهد المتأخرة لعدم وجود الأعمدة المطلوبة.")
+    st.info("ℹ️ البيانات المطلوبة غير متوفرة")
 
+# 📊 الملخصات
+st.subheader("📊 ملخص حسب النوع")
+st.dataframe(df.groupby("نوع العهدة")["المبلغ"].sum().reset_index())
 
-st.subheader("📊 ملخص العهد حسب النوع")
-summary = df.groupby("نوع العهدة")["المبلغ"].sum().reset_index()
-st.dataframe(summary)
-
-# عرض كامل السجل
-with st.expander("📄 عرض جميع العهد"):
+with st.expander("عرض السجل الكامل"):
     st.dataframe(df)
 
-# 📉 تسوية العهد تلقائيًا
-st.subheader("💸 ملخص التسوية حسب المستفيد")
+# 💸 تسوية الحسابات
+st.subheader("ملخص التسوية")
+summary = df.groupby(["اسم المستفيد", "نوع الحركة (مدين/دائن)"])["المبلغ"].sum().unstack(fill_value=0)
+summary["المتبقي"] = summary["مدين"] - summary["دائن"]
+st.dataframe(summary)
 
-# حساب الصرف (مدين) مقابل السداد (دائن)
-summary_by_name = df.groupby(["اسم المستفيد", "نوع الحركة (مدين/دائن)"])["المبلغ"].sum().unstack(fill_value=0)
-summary_by_name["المتبقي"] = summary_by_name.get("مدين", 0) - summary_by_name.get("دائن", 0)
-summary_by_name = summary_by_name.reset_index()
-
-st.dataframe(summary_by_name)
-
-# قائمة الموظفين الذين لديهم مبالغ غير مسددة
-unsettled = summary_by_name[summary_by_name["المتبقي"] > 0]
-if not unsettled.empty:
-    st.warning("🟠 الموظفون الذين لديهم عُهد غير مسددة:")
-    st.dataframe(unsettled[["اسم المستفيد", "المتبقي"]])
-    st.success("✅ جميع العُهد تمت تسويتها.")
+if not summary[summary["المتبقي"] > 0].empty:
+    st.warning("🟠 موظفون لديهم أرصدة غير مسددة")
+else:
+    st.success("✅ جميع الحسابات مسددة")
