@@ -49,7 +49,7 @@ if "note" in locals() and note:
     st.info(f"📌 التصنيف المقترح للبيان: {predicted_type}")
 
 # كشف الشذوذ في المبلغ
-if amount > 0:
+if "amount" in locals() and amount > 0:
     anomaly_flag = anomaly_model.predict([[amount]])[0]
     if anomaly_flag == -1:
         st.warning("⚠️ المبلغ المُدخل خارج النطاق المعتاد (قيمة شاذة). يُرجى التأكد.")
